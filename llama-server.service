@@ -1,0 +1,42 @@
+[Unit]
+Description=Llama.cpp Server Service
+After=network.target nvidia-persistenced.service
+Wants=nvidia-persistenced.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/llama.cpp/build/bin
+
+# Переменные окружения
+Environment="CUDA_VISIBLE_DEVICES=0"
+Environment="CUDA_CACHE_PATH=/tmp/cuda-cache"
+Environment="GGML_CUDA_DMMV_X=32"
+Environment="GGML_CUDA_DMMV_Y=1"
+Environment="GGML_CUDA_MMV_Y=1"
+
+# Ограничения ресурсов
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+Nice=-5
+
+# Запуск через обёртку
+ExecStart=/usr/local/bin/llama-server-wrapper.sh
+
+# Перезапуск при падении
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Логирование
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=llama-server
+
+# Очистка при остановке
+ExecStopPost=/bin/bash -c 'rm -rf /tmp/cuda-cache/* 2>/dev/null || true'
+
+[Install]
+WantedBy=multi-user.target
